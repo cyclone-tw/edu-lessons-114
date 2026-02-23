@@ -1048,6 +1048,230 @@
 
     // --- Global state ---
     let catalogData = null;
+    let isAdminMode = false;
+
+    // --- Task 4: GitHubAPI object ---
+    const GitHubAPI = {
+      token: localStorage.getItem('gh_token') || null,
+      owner: null,
+      repo: null,
+
+      init(owner, repo) {
+        this.owner = owner;
+        this.repo = repo;
+      },
+
+      setToken(token) {
+        this.token = token;
+        localStorage.setItem('gh_token', token);
+      },
+
+      clearToken() {
+        this.token = null;
+        localStorage.removeItem('gh_token');
+      },
+
+      async request(method, path, body = null) {
+        const url = `https://api.github.com/repos/${this.owner}/${this.repo}/${path}`;
+        const headers = {
+          'Authorization': `Bearer ${this.token}`,
+          'Accept': 'application/vnd.github.v3+json',
+        };
+        if (body) headers['Content-Type'] = 'application/json';
+
+        const res = await fetch(url, {
+          method,
+          headers,
+          body: body ? JSON.stringify(body) : null
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.message || `GitHub API error: ${res.status}`);
+        }
+
+        if (res.status === 204) return null;
+        return res.json();
+      },
+
+      async getContents(path) {
+        return this.request('GET', `contents/${path}`);
+      },
+
+      async createOrUpdateFile(path, content, message, sha = null) {
+        const body = {
+          message,
+          content: btoa(unescape(encodeURIComponent(content))),
+        };
+        if (sha) body.sha = sha;
+        return this.request('PUT', `contents/${path}`, body);
+      },
+
+      async createOrUpdateBinaryFile(path, base64Content, message, sha = null) {
+        const body = { message, content: base64Content };
+        if (sha) body.sha = sha;
+        return this.request('PUT', `contents/${path}`, body);
+      },
+
+      async deleteFile(path, sha, message) {
+        return this.request('DELETE', `contents/${path}`, { message, sha });
+      },
+
+      async getUser() {
+        const res = await fetch('https://api.github.com/user', {
+          headers: { 'Authorization': `Bearer ${this.token}` }
+        });
+        if (!res.ok) throw new Error('Token 無效');
+        return res.json();
+      },
+
+      async getFileSha(path) {
+        try {
+          const file = await this.getContents(path);
+          return file.sha;
+        } catch {
+          return null;
+        }
+      }
+    };
+
+    // --- Task 4: Modal utilities ---
+    function showModal(modalId) {
+      document.getElementById(modalId).classList.remove('hidden');
+    }
+
+    function hideModal(modalId) {
+      document.getElementById(modalId).classList.add('hidden');
+    }
+
+    function hideAllModals() {
+      document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
+    }
+
+    // --- Task 4: Admin mode state management ---
+    function enterAdminMode() {
+      isAdminMode = true;
+      document.body.classList.add('admin-mode');
+      if (catalogData) renderCatalog(catalogData);
+      showToast('已進入管理模式', 'success');
+    }
+
+    function exitAdminMode() {
+      isAdminMode = false;
+      document.body.classList.remove('admin-mode');
+      if (catalogData) renderCatalog(catalogData);
+      showToast('已離開管理模式', 'success');
+    }
+
+    /**
+     * handleAdminToggle()
+     * Check for existing valid token or show token modal
+     */
+    async function handleAdminToggle() {
+      if (isAdminMode) {
+        exitAdminMode();
+        return;
+      }
+
+      if (GitHubAPI.token) {
+        try {
+          await GitHubAPI.getUser();
+          enterAdminMode();
+        } catch {
+          GitHubAPI.clearToken();
+          showModal('token-modal');
+          document.getElementById('token-input').value = '';
+          document.getElementById('token-input').focus();
+        }
+      } else {
+        showModal('token-modal');
+        document.getElementById('token-input').value = '';
+        document.getElementById('token-input').focus();
+      }
+    }
+
+    /**
+     * handleTokenSubmit()
+     * Validate token, save to localStorage, enter admin mode
+     */
+    async function handleTokenSubmit() {
+      const input = document.getElementById('token-input');
+      const token = input.value.trim();
+
+      if (!token) {
+        showToast('請輸入 Token', 'error');
+        return;
+      }
+
+      const submitBtn = document.getElementById('btn-submit-token');
+      const originalText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = '驗證中...';
+
+      try {
+        GitHubAPI.setToken(token);
+        await GitHubAPI.getUser();
+        hideModal('token-modal');
+        enterAdminMode();
+      } catch (err) {
+        GitHubAPI.clearToken();
+        showToast('Token 驗證失敗：' + err.message, 'error');
+        input.value = '';
+        input.focus();
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
+    }
+
+    // --- Task 4: Placeholder functions for Tasks 5-7 ---
+    function renameCategory(catIndex) {
+      showToast('重新命名功能即將開放', 'success');
+    }
+
+    function deleteCategory(catIndex) {
+      showToast('刪除功能即將開放', 'success');
+    }
+
+    function addGroup(catIndex) {
+      showToast('新增組別功能即將開放', 'success');
+    }
+
+    function moveCategoryUp(catIndex) {
+      showToast('排序功能即將開放', 'success');
+    }
+
+    function moveCategoryDown(catIndex) {
+      showToast('排序功能即將開放', 'success');
+    }
+
+    function renameGroup(catIndex, groupIndex) {
+      showToast('重新命名功能即將開放', 'success');
+    }
+
+    function deleteGroup(catIndex, groupIndex) {
+      showToast('刪除功能即將開放', 'success');
+    }
+
+    function moveGroupUp(catIndex, groupIndex) {
+      showToast('排序功能即將開放', 'success');
+    }
+
+    function moveGroupDown(catIndex, groupIndex) {
+      showToast('排序功能即將開放', 'success');
+    }
+
+    function deleteFile(catIndex, groupIndex, fileIndex) {
+      showToast('刪除功能即將開放', 'success');
+    }
+
+    function triggerUpload(catIndex, groupIndex) {
+      showToast('上傳功能即將開放', 'success');
+    }
+
+    function addCategory() {
+      showToast('新增科目功能即將開放', 'success');
+    }
 
     // --- Task 3: Catalog loading + rendering ---
 
@@ -1123,7 +1347,9 @@
       // Sort categories by order
       const sortedCategories = [...data.categories].sort((a, b) => a.order - b.order);
 
-      sortedCategories.forEach(category => {
+      // Build a mapping from sorted index to original data index
+      sortedCategories.forEach((category, catSortedIdx) => {
+        const catIndex = data.categories.indexOf(category);
         const categoryEl = document.createElement('div');
         categoryEl.className = 'category-item collapsed';
 
@@ -1135,22 +1361,49 @@
         // Sort groups by order
         const sortedGroups = [...(category.groups || [])].sort((a, b) => a.order - b.order);
 
+        // Build category admin actions HTML
+        const catAdminActions = isAdminMode ? `
+          <div class="admin-actions admin-only">
+            <button class="btn-icon btn-sm" onclick="event.stopPropagation(); renameCategory(${catIndex})" title="重新命名">✏️</button>
+            <button class="btn-icon btn-sm" onclick="event.stopPropagation(); addGroup(${catIndex})" title="新增組別">➕</button>
+            <div class="sort-buttons">
+              <button class="btn-sort" onclick="event.stopPropagation(); moveCategoryUp(${catIndex})" title="上移">▲</button>
+              <button class="btn-sort" onclick="event.stopPropagation(); moveCategoryDown(${catIndex})" title="下移">▼</button>
+            </div>
+            <button class="btn-icon btn-sm" onclick="event.stopPropagation(); deleteCategory(${catIndex})" title="刪除" style="color:var(--danger)">🗑️</button>
+          </div>` : '';
+
         // Build groups HTML
         let groupsHtml = '';
-        sortedGroups.forEach(group => {
+        sortedGroups.forEach((group, grpSortedIdx) => {
+          const groupIndex = (category.groups || []).indexOf(group);
           const fileCount = group.files ? group.files.length : 0;
+
+          // Build group admin actions HTML
+          const groupAdminActions = isAdminMode ? `
+            <div class="admin-actions admin-only">
+              <button class="btn-icon btn-sm" onclick="event.stopPropagation(); renameGroup(${catIndex}, ${groupIndex})" title="重新命名">✏️</button>
+              <div class="sort-buttons">
+                <button class="btn-sort" onclick="event.stopPropagation(); moveGroupUp(${catIndex}, ${groupIndex})" title="上移">▲</button>
+                <button class="btn-sort" onclick="event.stopPropagation(); moveGroupDown(${catIndex}, ${groupIndex})" title="下移">▼</button>
+              </div>
+              <button class="btn-icon btn-sm" onclick="event.stopPropagation(); deleteGroup(${catIndex}, ${groupIndex})" title="刪除" style="color:var(--danger)">🗑️</button>
+            </div>` : '';
 
           // Build file list HTML
           let filesHtml = '';
           if (group.files && group.files.length > 0) {
-            const fileItems = group.files.map(file => {
+            const fileItems = group.files.map((file, fileIndex) => {
               const displayName = file.replace(/\.html$/, '');
               const filePath = `lessons/${category.folder}/${group.folder}/${file}`;
+              const fileAdminAction = isAdminMode ? `
+                <button class="btn-icon btn-sm admin-only" onclick="deleteFile(${catIndex}, ${groupIndex}, ${fileIndex})" title="刪除檔案" style="color:var(--danger)">🗑️</button>` : '';
               return `<div class="file-item">
                 <span class="file-icon">📄</span>
                 <a href="${filePath}" target="_blank" class="file-link">${displayName}</a>
                 <div class="file-actions">
                   <button class="btn-copy" onclick="copyLink(this, '${filePath}')" title="複製連結">📋</button>
+                  ${fileAdminAction}
                 </div>
               </div>`;
             }).join('');
@@ -1159,14 +1412,23 @@
             filesHtml = `<div class="file-list"><div class="file-item text-secondary" style="font-size:0.85rem;">尚無檔案</div></div>`;
           }
 
+          // Upload area for admin mode
+          const uploadArea = isAdminMode ? `
+            <div class="upload-area admin-only" onclick="triggerUpload(${catIndex}, ${groupIndex})" title="上傳檔案">
+              <div class="upload-icon">📤</div>
+              <div>拖曳或點擊上傳 HTML 檔案</div>
+            </div>` : '';
+
           groupsHtml += `<div class="group-item collapsed">
             <div class="group-header" onclick="toggleCollapse(this.parentElement)">
               <span class="arrow">▶</span>
               <span class="name">${group.displayName}</span>
               <span class="count-badge">${fileCount}</span>
+              ${groupAdminActions}
             </div>
             <div class="children">
               ${filesHtml}
+              ${uploadArea}
             </div>
           </div>`;
         });
@@ -1176,6 +1438,7 @@
             <span class="arrow">▶</span>
             <span class="name">${category.displayName}</span>
             <span class="count-badge">${totalFiles}</span>
+            ${catAdminActions}
           </div>
           <div class="children">
             <div class="category-body">
@@ -1232,6 +1495,11 @@
         const data = await res.json();
         catalogData = data;
 
+        // Initialize GitHubAPI with repo info from catalog
+        if (data.repo && data.repo.owner) {
+          GitHubAPI.init(data.repo.owner, data.repo.name);
+        }
+
         // For groups missing a files array, try fetching from GitHub API
         if (data.categories && data.categories.length > 0) {
           const fetchPromises = [];
@@ -1267,14 +1535,56 @@
     }
 
     // --- Initialize on DOMContentLoaded ---
-    document.addEventListener('DOMContentLoaded', loadCatalog);
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Load catalog first
+      await loadCatalog();
 
-    // Task 4: admin mode + GitHub API
-    //   - Admin toggle → token modal
-    //   - Token validation via GitHub API
-    //   - Store token in sessionStorage
-    //   - Admin mode UI toggle
-    //
+      // --- Task 4: Event listeners ---
+
+      // Admin toggle button
+      document.getElementById('btn-admin-toggle').addEventListener('click', handleAdminToggle);
+
+      // Token modal: submit
+      document.getElementById('btn-submit-token').addEventListener('click', handleTokenSubmit);
+
+      // Token modal: allow Enter key to submit
+      document.getElementById('token-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleTokenSubmit();
+      });
+
+      // Logout / exit admin mode
+      document.getElementById('btn-logout-admin').addEventListener('click', exitAdminMode);
+
+      // Add category button in admin bar
+      document.getElementById('btn-add-category').addEventListener('click', addCategory);
+
+      // Wire up all [data-close-modal] buttons
+      document.querySelectorAll('[data-close-modal]').forEach(el => {
+        el.addEventListener('click', (e) => {
+          const modal = e.target.closest('.modal');
+          if (modal) modal.classList.add('hidden');
+        });
+      });
+
+      // Close modals on backdrop click
+      document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+        backdrop.addEventListener('click', () => {
+          const modal = backdrop.closest('.modal');
+          if (modal) modal.classList.add('hidden');
+        });
+      });
+
+      // Close modals on Escape key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') hideAllModals();
+      });
+
+      // Check URL params for auto-admin mode
+      if (new URLSearchParams(window.location.search).has('admin')) {
+        handleAdminToggle();
+      }
+    });
+
     // Task 5: category CRUD
     //   - Add new category
     //   - Rename category
