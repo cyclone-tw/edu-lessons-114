@@ -1224,33 +1224,424 @@
       }
     }
 
-    // --- Task 4: Placeholder functions for Tasks 5-7 ---
+    // --- Task 5: Category & Group CRUD ---
+
+    // Modal callback state
+    let modalCallback = null;
+    let confirmCallback = null;
+
+    /**
+     * saveCatalog()
+     * Persist current catalogData to catalog.json on GitHub
+     */
+    async function saveCatalog() {
+      const path = 'catalog.json';
+      const content = JSON.stringify(catalogData, null, 2);
+      const sha = await GitHubAPI.getFileSha(path);
+      await GitHubAPI.createOrUpdateFile(path, content, '更新課文目錄', sha);
+    }
+
+    /**
+     * showCategoryModal(title, defaultValue, callback)
+     * Reusable modal for add/rename of categories and groups
+     */
+    function showCategoryModal(title, defaultValue, callback) {
+      document.getElementById('category-modal-title').textContent = title;
+      const input = document.getElementById('category-name-input');
+      input.value = defaultValue || '';
+      modalCallback = callback;
+      showModal('category-modal');
+      setTimeout(() => input.focus(), 50);
+    }
+
+    /**
+     * showConfirmModal(title, message, callback)
+     * Reusable confirmation dialog for delete actions
+     */
+    function showConfirmModal(title, message, callback) {
+      document.getElementById('confirm-modal-title').textContent = title;
+      document.getElementById('confirm-modal-message').textContent = message;
+      confirmCallback = callback;
+      showModal('confirm-modal');
+    }
+
+    /**
+     * setButtonLoading(btn, loading)
+     * Toggle loading state on a button
+     */
+    function setButtonLoading(btn, loading) {
+      if (loading) {
+        btn._originalText = btn.textContent;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;"></span> 處理中...';
+      } else {
+        btn.disabled = false;
+        btn.textContent = btn._originalText || '儲存';
+      }
+    }
+
+    /**
+     * addCategory()
+     * Show modal to create a new category (科目)
+     */
+    function addCategory() {
+      showCategoryModal('新增科目', '', async (name) => {
+        // Validate not empty
+        if (!name.trim()) {
+          showToast('名稱不能為空', 'error');
+          return;
+        }
+        name = name.trim();
+
+        // Validate not duplicate folder name
+        const duplicate = catalogData.categories.some(c => c.folder === name);
+        if (duplicate) {
+          showToast('已存在相同名稱的科目', 'error');
+          return;
+        }
+
+        const saveBtn = document.getElementById('btn-save-category');
+        setButtonLoading(saveBtn, true);
+
+        try {
+          // Create new category object
+          const newCategory = {
+            folder: name,
+            displayName: name,
+            order: catalogData.categories.length + 1,
+            groups: []
+          };
+
+          // Push to catalogData
+          catalogData.categories.push(newCategory);
+
+          // Save catalog.json to GitHub
+          await saveCatalog();
+
+          // Create .gitkeep in the new folder
+          try {
+            await GitHubAPI.createOrUpdateFile(
+              `lessons/${name}/.gitkeep`,
+              '',
+              `新增科目: ${name}`
+            );
+          } catch (e) {
+            console.warn('Failed to create .gitkeep:', e);
+          }
+
+          hideModal('category-modal');
+          renderCatalog(catalogData);
+          showToast(`已新增科目「${name}」`, 'success');
+        } catch (err) {
+          // Rollback: remove the category we just added
+          catalogData.categories.pop();
+          console.error('addCategory error:', err);
+          showToast('新增失敗：' + err.message, 'error');
+        } finally {
+          setButtonLoading(saveBtn, false);
+        }
+      });
+    }
+
+    /**
+     * renameCategory(catIndex)
+     * Show modal to rename a category's displayName
+     */
     function renameCategory(catIndex) {
-      showToast('重新命名功能即將開放', 'success');
+      const category = catalogData.categories[catIndex];
+      if (!category) return;
+
+      showCategoryModal('重新命名科目', category.displayName, async (newName) => {
+        if (!newName.trim()) {
+          showToast('名稱不能為空', 'error');
+          return;
+        }
+        newName = newName.trim();
+
+        const saveBtn = document.getElementById('btn-save-category');
+        setButtonLoading(saveBtn, true);
+
+        try {
+          const oldName = category.displayName;
+          category.displayName = newName;
+
+          await saveCatalog();
+
+          hideModal('category-modal');
+          renderCatalog(catalogData);
+          showToast(`已將「${oldName}」重新命名為「${newName}」`, 'success');
+        } catch (err) {
+          console.error('renameCategory error:', err);
+          showToast('重新命名失敗：' + err.message, 'error');
+        } finally {
+          setButtonLoading(saveBtn, false);
+        }
+      });
     }
 
+    /**
+     * deleteCategory(catIndex)
+     * Confirm and delete a category, including all files on GitHub
+     */
     function deleteCategory(catIndex) {
-      showToast('刪除功能即將開放', 'success');
+      const category = catalogData.categories[catIndex];
+      if (!category) return;
+
+      // Count total files
+      const totalFiles = (category.groups || []).reduce((sum, g) => {
+        return sum + (g.files ? g.files.length : 0);
+      }, 0);
+
+      const title = '確認刪除科目';
+      const message = totalFiles > 0
+        ? `此科目「${category.displayName}」下有 ${totalFiles} 個檔案，確定要刪除嗎？此操作無法復原。`
+        : `確定要刪除「${category.displayName}」嗎？此操作無法復原。`;
+
+      showConfirmModal(title, message, async () => {
+        const confirmBtn = document.getElementById('btn-confirm-ok');
+        setButtonLoading(confirmBtn, true);
+
+        try {
+          // Delete all files from GitHub
+          for (const group of (category.groups || [])) {
+            for (const file of (group.files || [])) {
+              const filePath = `lessons/${category.folder}/${group.folder}/${file}`;
+              try {
+                const sha = await GitHubAPI.getFileSha(filePath);
+                if (sha) {
+                  await GitHubAPI.deleteFile(filePath, sha, `刪除檔案: ${file}`);
+                }
+              } catch (e) {
+                console.warn(`Failed to delete ${filePath}:`, e);
+              }
+            }
+
+            // Delete group .gitkeep
+            const groupGitkeep = `lessons/${category.folder}/${group.folder}/.gitkeep`;
+            try {
+              const sha = await GitHubAPI.getFileSha(groupGitkeep);
+              if (sha) {
+                await GitHubAPI.deleteFile(groupGitkeep, sha, `刪除組別資料夾: ${group.folder}`);
+              }
+            } catch (e) {
+              console.warn(`Failed to delete ${groupGitkeep}:`, e);
+            }
+          }
+
+          // Delete category .gitkeep
+          const catGitkeep = `lessons/${category.folder}/.gitkeep`;
+          try {
+            const sha = await GitHubAPI.getFileSha(catGitkeep);
+            if (sha) {
+              await GitHubAPI.deleteFile(catGitkeep, sha, `刪除科目資料夾: ${category.folder}`);
+            }
+          } catch (e) {
+            console.warn(`Failed to delete ${catGitkeep}:`, e);
+          }
+
+          // Remove from catalogData
+          const deletedName = category.displayName;
+          catalogData.categories.splice(catIndex, 1);
+
+          // Recalculate order values
+          catalogData.categories.forEach((c, i) => {
+            c.order = i + 1;
+          });
+
+          // Save catalog.json
+          await saveCatalog();
+
+          hideModal('confirm-modal');
+          renderCatalog(catalogData);
+          showToast(`已刪除科目「${deletedName}」`, 'success');
+        } catch (err) {
+          console.error('deleteCategory error:', err);
+          showToast('刪除失敗：' + err.message, 'error');
+        } finally {
+          setButtonLoading(confirmBtn, false);
+        }
+      });
     }
 
+    /**
+     * addGroup(catIndex)
+     * Show modal to create a new group within a category
+     */
     function addGroup(catIndex) {
-      showToast('新增組別功能即將開放', 'success');
+      const category = catalogData.categories[catIndex];
+      if (!category) return;
+
+      showCategoryModal('新增組別', '', async (name) => {
+        if (!name.trim()) {
+          showToast('名稱不能為空', 'error');
+          return;
+        }
+        name = name.trim();
+
+        // Validate not duplicate within this category
+        const duplicate = (category.groups || []).some(g => g.folder === name);
+        if (duplicate) {
+          showToast('此科目下已存在相同名稱的組別', 'error');
+          return;
+        }
+
+        const saveBtn = document.getElementById('btn-save-category');
+        setButtonLoading(saveBtn, true);
+
+        try {
+          if (!category.groups) category.groups = [];
+
+          const newGroup = {
+            folder: name,
+            displayName: name,
+            order: category.groups.length + 1,
+            files: []
+          };
+
+          category.groups.push(newGroup);
+
+          // Save catalog.json
+          await saveCatalog();
+
+          // Create .gitkeep in the new group folder
+          try {
+            await GitHubAPI.createOrUpdateFile(
+              `lessons/${category.folder}/${name}/.gitkeep`,
+              '',
+              `新增組別: ${category.folder}/${name}`
+            );
+          } catch (e) {
+            console.warn('Failed to create .gitkeep:', e);
+          }
+
+          hideModal('category-modal');
+          renderCatalog(catalogData);
+          showToast(`已新增組別「${name}」`, 'success');
+        } catch (err) {
+          // Rollback
+          if (category.groups) category.groups.pop();
+          console.error('addGroup error:', err);
+          showToast('新增失敗：' + err.message, 'error');
+        } finally {
+          setButtonLoading(saveBtn, false);
+        }
+      });
     }
 
+    /**
+     * renameGroup(catIndex, groupIndex)
+     * Show modal to rename a group's displayName
+     */
+    function renameGroup(catIndex, groupIndex) {
+      const category = catalogData.categories[catIndex];
+      if (!category) return;
+      const group = (category.groups || [])[groupIndex];
+      if (!group) return;
+
+      showCategoryModal('重新命名組別', group.displayName, async (newName) => {
+        if (!newName.trim()) {
+          showToast('名稱不能為空', 'error');
+          return;
+        }
+        newName = newName.trim();
+
+        const saveBtn = document.getElementById('btn-save-category');
+        setButtonLoading(saveBtn, true);
+
+        try {
+          const oldName = group.displayName;
+          group.displayName = newName;
+
+          await saveCatalog();
+
+          hideModal('category-modal');
+          renderCatalog(catalogData);
+          showToast(`已將「${oldName}」重新命名為「${newName}」`, 'success');
+        } catch (err) {
+          console.error('renameGroup error:', err);
+          showToast('重新命名失敗：' + err.message, 'error');
+        } finally {
+          setButtonLoading(saveBtn, false);
+        }
+      });
+    }
+
+    /**
+     * deleteGroup(catIndex, groupIndex)
+     * Confirm and delete a group, including all files on GitHub
+     */
+    function deleteGroup(catIndex, groupIndex) {
+      const category = catalogData.categories[catIndex];
+      if (!category) return;
+      const group = (category.groups || [])[groupIndex];
+      if (!group) return;
+
+      const fileCount = group.files ? group.files.length : 0;
+      const title = '確認刪除組別';
+      const message = fileCount > 0
+        ? `此組別「${group.displayName}」下有 ${fileCount} 個檔案，確定要刪除嗎？此操作無法復原。`
+        : `確定要刪除「${group.displayName}」嗎？此操作無法復原。`;
+
+      showConfirmModal(title, message, async () => {
+        const confirmBtn = document.getElementById('btn-confirm-ok');
+        setButtonLoading(confirmBtn, true);
+
+        try {
+          // Delete all files from GitHub
+          for (const file of (group.files || [])) {
+            const filePath = `lessons/${category.folder}/${group.folder}/${file}`;
+            try {
+              const sha = await GitHubAPI.getFileSha(filePath);
+              if (sha) {
+                await GitHubAPI.deleteFile(filePath, sha, `刪除檔案: ${file}`);
+              }
+            } catch (e) {
+              console.warn(`Failed to delete ${filePath}:`, e);
+            }
+          }
+
+          // Delete group .gitkeep
+          const gitkeepPath = `lessons/${category.folder}/${group.folder}/.gitkeep`;
+          try {
+            const sha = await GitHubAPI.getFileSha(gitkeepPath);
+            if (sha) {
+              await GitHubAPI.deleteFile(gitkeepPath, sha, `刪除組別資料夾: ${group.folder}`);
+            }
+          } catch (e) {
+            console.warn(`Failed to delete ${gitkeepPath}:`, e);
+          }
+
+          // Remove from category.groups
+          const deletedName = group.displayName;
+          category.groups.splice(groupIndex, 1);
+
+          // Recalculate order values
+          category.groups.forEach((g, i) => {
+            g.order = i + 1;
+          });
+
+          // Save catalog.json
+          await saveCatalog();
+
+          hideModal('confirm-modal');
+          renderCatalog(catalogData);
+          showToast(`已刪除組別「${deletedName}」`, 'success');
+        } catch (err) {
+          console.error('deleteGroup error:', err);
+          showToast('刪除失敗：' + err.message, 'error');
+        } finally {
+          setButtonLoading(confirmBtn, false);
+        }
+      });
+    }
+
+    // --- Placeholder functions for Tasks 6-7 ---
     function moveCategoryUp(catIndex) {
       showToast('排序功能即將開放', 'success');
     }
 
     function moveCategoryDown(catIndex) {
       showToast('排序功能即將開放', 'success');
-    }
-
-    function renameGroup(catIndex, groupIndex) {
-      showToast('重新命名功能即將開放', 'success');
-    }
-
-    function deleteGroup(catIndex, groupIndex) {
-      showToast('刪除功能即將開放', 'success');
     }
 
     function moveGroupUp(catIndex, groupIndex) {
@@ -1267,10 +1658,6 @@
 
     function triggerUpload(catIndex, groupIndex) {
       showToast('上傳功能即將開放', 'success');
-    }
-
-    function addCategory() {
-      showToast('新增科目功能即將開放', 'success');
     }
 
     // --- Task 3: Catalog loading + rendering ---
@@ -1579,17 +1966,40 @@
         if (e.key === 'Escape') hideAllModals();
       });
 
+      // --- Task 5: Category/Group CRUD modal event listeners ---
+
+      // Category modal: save button calls the stored callback
+      document.getElementById('btn-save-category').addEventListener('click', () => {
+        const value = document.getElementById('category-name-input').value;
+        if (modalCallback) modalCallback(value);
+      });
+
+      // Category modal: Enter key to save
+      document.getElementById('category-name-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const value = document.getElementById('category-name-input').value;
+          if (modalCallback) modalCallback(value);
+        }
+      });
+
+      // Confirm modal: confirm button calls the stored callback
+      document.getElementById('btn-confirm-ok').addEventListener('click', () => {
+        if (confirmCallback) confirmCallback();
+      });
+
       // Check URL params for auto-admin mode
       if (new URLSearchParams(window.location.search).has('admin')) {
         handleAdminToggle();
       }
     });
 
-    // Task 5: category CRUD
-    //   - Add new category
-    //   - Rename category
-    //   - Delete category (with confirm)
-    //   - Persist to catalog.json via GitHub API
+    // Task 5: category CRUD — DONE
+    //   - saveCatalog() persists to GitHub
+    //   - showCategoryModal() / showConfirmModal() reusable modal helpers
+    //   - addCategory / renameCategory / deleteCategory
+    //   - addGroup / renameGroup / deleteGroup
+    //   - Loading state & error handling on all API calls
     //
     // Task 6: file upload/delete
     //   - Drag-and-drop upload area
