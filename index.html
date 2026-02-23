@@ -1635,7 +1635,7 @@
       });
     }
 
-    // --- Placeholder functions for Tasks 6-7 ---
+    // --- Placeholder functions for Task 7 ---
     function moveCategoryUp(catIndex) {
       showToast('排序功能即將開放', 'success');
     }
@@ -1652,12 +1652,182 @@
       showToast('排序功能即將開放', 'success');
     }
 
-    function deleteFile(catIndex, groupIndex, fileIndex) {
-      showToast('刪除功能即將開放', 'success');
+    // --- Task 6: File upload & delete ---
+
+    /**
+     * readFileAsBase64(file)
+     * Read a File object as pure base64 string (without the data URL prefix)
+     */
+    function readFileAsBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          // reader.result is "data:...;base64,XXXXX"
+          // We need just the XXXXX part
+          const base64 = reader.result.split(',')[1];
+          resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
     }
 
-    function triggerUpload(catIndex, groupIndex) {
-      showToast('上傳功能即將開放', 'success');
+    /**
+     * processUploadedFiles(catIndex, groupIndex, files)
+     * Shared logic for uploading files (used by both click and drag-and-drop)
+     */
+    async function processUploadedFiles(catIndex, groupIndex, files) {
+      const category = catalogData.categories[catIndex];
+      const group = category.groups[groupIndex];
+
+      // Filter to only .html files
+      const htmlFiles = files.filter(f => f.name.endsWith('.html'));
+      if (htmlFiles.length === 0) {
+        showToast('請選擇 .html 檔案', 'error');
+        return;
+      }
+
+      for (const file of htmlFiles) {
+        try {
+          showToast(`正在上傳 ${file.name}...`, 'success');
+
+          // Read file as base64
+          const base64 = await readFileAsBase64(file);
+
+          // Upload path
+          const path = `lessons/${category.folder}/${group.folder}/${file.name}`;
+
+          // Check if file already exists
+          const existingSha = await GitHubAPI.getFileSha(path);
+          if (existingSha) {
+            showToast(`覆蓋既有檔案 ${file.name}`, 'success');
+          }
+
+          // Upload to GitHub
+          await GitHubAPI.createOrUpdateBinaryFile(
+            path,
+            base64,
+            `上傳課文：${file.name}`,
+            existingSha
+          );
+
+          // Update catalog.json in memory
+          if (!group.files) group.files = [];
+          if (!group.files.includes(file.name)) {
+            group.files.push(file.name);
+          }
+
+          showToast(`${file.name} 上傳成功`, 'success');
+        } catch (err) {
+          showToast(`上傳 ${file.name} 失敗：${err.message}`, 'error');
+        }
+      }
+
+      // Save catalog and re-render
+      try {
+        await saveCatalog();
+        renderCatalog(catalogData);
+      } catch (err) {
+        showToast('目錄更新失敗：' + err.message, 'error');
+      }
+    }
+
+    /**
+     * triggerUpload(catIndex, groupIndex)
+     * Create a file input, trigger click, and upload selected HTML files
+     */
+    async function triggerUpload(catIndex, groupIndex) {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.html';
+      input.multiple = true;
+
+      input.onchange = async (e) => {
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+        await processUploadedFiles(catIndex, groupIndex, files);
+      };
+
+      input.click();
+    }
+
+    /**
+     * deleteFileItem(catIndex, groupIndex, fileIndex)
+     * Confirm and delete a file from GitHub and catalog
+     * Named deleteFileItem to avoid conflict with GitHubAPI.deleteFile
+     */
+    async function deleteFileItem(catIndex, groupIndex, fileIndex) {
+      const category = catalogData.categories[catIndex];
+      const group = category.groups[groupIndex];
+      const fileName = group.files[fileIndex];
+
+      showConfirmModal(
+        '刪除檔案',
+        `確定要刪除「${fileName.replace('.html', '')}」嗎？`,
+        async () => {
+          try {
+            hideAllModals();
+            showToast('正在刪除...', 'success');
+
+            const path = `lessons/${category.folder}/${group.folder}/${fileName}`;
+            const sha = await GitHubAPI.getFileSha(path);
+
+            if (sha) {
+              await GitHubAPI.deleteFile(path, sha, `刪除課文：${fileName}`);
+            }
+
+            // Remove from catalog
+            group.files.splice(fileIndex, 1);
+            await saveCatalog();
+
+            renderCatalog(catalogData);
+            showToast(`${fileName.replace('.html', '')} 已刪除`, 'success');
+          } catch (err) {
+            showToast('刪除失敗：' + err.message, 'error');
+          }
+        }
+      );
+    }
+
+    /**
+     * wireUploadAreaDragDrop()
+     * Attach drag-and-drop event handlers to all .upload-area elements
+     * Called after each renderCatalog() when in admin mode
+     */
+    function wireUploadAreaDragDrop() {
+      document.querySelectorAll('.upload-area').forEach(area => {
+        const catIndex = parseInt(area.dataset.catIndex, 10);
+        const groupIndex = parseInt(area.dataset.groupIndex, 10);
+
+        area.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          area.classList.add('drag-over');
+        });
+
+        area.addEventListener('dragenter', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          area.classList.add('drag-over');
+        });
+
+        area.addEventListener('dragleave', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          area.classList.remove('drag-over');
+        });
+
+        area.addEventListener('drop', async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          area.classList.remove('drag-over');
+
+          const files = Array.from(e.dataTransfer.files);
+          if (!files.length) return;
+
+          await processUploadedFiles(catIndex, groupIndex, files);
+        });
+      });
     }
 
     // --- Task 3: Catalog loading + rendering ---
@@ -1784,7 +1954,7 @@
               const displayName = file.replace(/\.html$/, '');
               const filePath = `lessons/${category.folder}/${group.folder}/${file}`;
               const fileAdminAction = isAdminMode ? `
-                <button class="btn-icon btn-sm admin-only" onclick="deleteFile(${catIndex}, ${groupIndex}, ${fileIndex})" title="刪除檔案" style="color:var(--danger)">🗑️</button>` : '';
+                <button class="btn-icon btn-sm admin-only" onclick="deleteFileItem(${catIndex}, ${groupIndex}, ${fileIndex})" title="刪除檔案" style="color:var(--danger)">🗑️</button>` : '';
               return `<div class="file-item">
                 <span class="file-icon">📄</span>
                 <a href="${filePath}" target="_blank" class="file-link">${displayName}</a>
@@ -1799,9 +1969,9 @@
             filesHtml = `<div class="file-list"><div class="file-item text-secondary" style="font-size:0.85rem;">尚無檔案</div></div>`;
           }
 
-          // Upload area for admin mode
+          // Upload area for admin mode (with drag-and-drop data attributes)
           const uploadArea = isAdminMode ? `
-            <div class="upload-area admin-only" onclick="triggerUpload(${catIndex}, ${groupIndex})" title="上傳檔案">
+            <div class="upload-area admin-only" onclick="triggerUpload(${catIndex}, ${groupIndex})" data-cat-index="${catIndex}" data-group-index="${groupIndex}" title="上傳檔案">
               <div class="upload-icon">📤</div>
               <div>拖曳或點擊上傳 HTML 檔案</div>
             </div>` : '';
@@ -1839,6 +2009,11 @@
 
       catalogEl.classList.remove('hidden');
       document.getElementById('empty-state').classList.add('hidden');
+
+      // Wire up drag-and-drop on all upload areas
+      if (isAdminMode) {
+        wireUploadAreaDragDrop();
+      }
     }
 
     /**
@@ -2001,11 +2176,15 @@
     //   - addGroup / renameGroup / deleteGroup
     //   - Loading state & error handling on all API calls
     //
-    // Task 6: file upload/delete
-    //   - Drag-and-drop upload area
-    //   - File upload via GitHub Contents API
-    //   - File delete with confirmation
-    //   - Progress indication
+    // Task 6: file upload/delete — DONE
+    //   - readFileAsBase64() helper
+    //   - processUploadedFiles() shared upload logic
+    //   - triggerUpload() click-to-upload with multi-file support
+    //   - deleteFileItem() with confirmation modal
+    //   - wireUploadAreaDragDrop() drag-and-drop support on upload areas
+    //   - .html file filter on drag-and-drop
+    //   - Existing file overwrite detection
+    //   - Toast notifications for progress/success/error
     //
     // Task 7: sorting
     //   - Category reordering (up/down)
