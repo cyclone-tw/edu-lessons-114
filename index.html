@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>114 學年度課文總覽</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* ========================================
+       114 課文總覽 — Dark Theme
+       ======================================== */
+
+    /* --- CSS Variables --- */
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-card: #14141f;
+      --bg-surface: #1a1a2e;
+      --accent: #00d4aa;
+      --accent-hover: #00f0c0;
+      --accent-glow: rgba(0, 212, 170, 0.15);
+      --text-primary: #e8e8e8;
+      --text-secondary: #a0a0b0;
+      --border: #2a2a3e;
+      --danger: #ff4757;
+      --danger-hover: #ff6b81;
+      --success: #2ed573;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --font: 'Noto Sans TC', sans-serif;
+      --transition: 0.3s ease;
+    }
+
+    /* --- Global Reset --- */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: var(--font);
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+      transition: color var(--transition);
+    }
+
+    a:hover {
+      color: var(--accent-hover);
+    }
+
+    ul, ol {
+      list-style: none;
+    }
+
+    /* ========================================
+       Header
+       ======================================== */
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .header-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-title .icon {
+      font-size: 1.5rem;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-admin-toggle {
+      background: none;
+      border: 1px solid transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 6px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 1.1rem;
+      transition: all var(--transition);
+      opacity: 0.4;
+    }
+
+    .btn-admin-toggle:hover {
+      opacity: 1;
+      color: var(--accent);
+      border-color: var(--border);
+    }
+
+    /* ========================================
+       Main Content
+       ======================================== */
+    main#app {
+      flex: 1;
+      padding: 24px;
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* ========================================
+       Catalog Tree
+       ======================================== */
+    #catalog {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* --- Category (top-level / 科目) --- */
+    .category-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color var(--transition);
+    }
+
+    .category-item:hover {
+      border-color: var(--accent);
+    }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px;
+      cursor: pointer;
+      user-select: none;
+      transition: background var(--transition);
+    }
+
+    .category-header:hover {
+      background: var(--accent-glow);
+    }
+
+    .category-header .arrow {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      transition: transform 0.25s ease;
+      flex-shrink: 0;
+      width: 16px;
+      text-align: center;
+    }
+
+    .category-header .name {
+      font-size: 1.05rem;
+      font-weight: 600;
+      flex: 1;
+    }
+
+    .count-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 24px;
+      height: 22px;
+      padding: 0 7px;
+      border-radius: 999px;
+      background: var(--accent-glow);
+      color: var(--accent);
+      font-size: 0.75rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .category-header .admin-actions {
+      display: flex;
+      gap: 4px;
+      margin-left: 8px;
+    }
+
+    /* --- Children container --- */
+    .children {
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .collapsed > .children {
+      display: none;
+    }
+
+    /* Arrow rotation */
+    .collapsed .arrow {
+      transform: rotate(-90deg);
+    }
+
+    .category-body {
+      padding: 0 18px 14px 18px;
+    }
+
+    /* --- Group (second-level / 組別) --- */
+    .group-item {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+
+    .group-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      transition: background var(--transition), color var(--transition);
+    }
+
+    .group-header:hover {
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-primary);
+    }
+
+    .group-header .arrow {
+      font-size: 0.6rem;
+      color: var(--text-secondary);
+      transition: transform 0.25s ease;
+      flex-shrink: 0;
+      width: 14px;
+      text-align: center;
+    }
+
+    .group-header .name {
+      flex: 1;
+    }
+
+    .group-header .admin-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    /* --- File List --- */
+    .file-list {
+      padding: 6px 14px 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      transition: background var(--transition);
+    }
+
+    .file-item:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .file-item .file-icon {
+      color: var(--accent);
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+
+    .file-item .file-link {
+      flex: 1;
+      color: var(--text-primary);
+      font-size: 0.92rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .file-item .file-link:hover {
+      color: var(--accent);
+    }
+
+    .file-item .file-actions {
+      display: flex;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .file-item:hover .file-actions {
+      opacity: 1;
+    }
+
+    /* --- Copy Button --- */
+    .btn-copy {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 0.78rem;
+      transition: all var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .btn-copy:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .btn-copy.copied {
+      color: var(--success);
+      border-color: var(--success);
+    }
+
+    /* ========================================
+       Sort Buttons (Admin)
+       ======================================== */
+    .sort-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .btn-sort {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0 3px;
+      font-size: 0.65rem;
+      line-height: 1;
+      transition: color var(--transition);
+      opacity: 0.6;
+    }
+
+    .btn-sort:hover {
+      color: var(--accent);
+      opacity: 1;
+    }
+
+    /* ========================================
+       Upload Area (Admin)
+       ======================================== */
+    .upload-area {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      text-align: center;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition);
+      margin-top: 8px;
+      font-size: 0.9rem;
+    }
+
+    .upload-area:hover,
+    .upload-area.drag-over {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+      color: var(--accent);
+    }
+
+    .upload-area .upload-icon {
+      font-size: 1.6rem;
+      margin-bottom: 6px;
+    }
+
+    .upload-area input[type="file"] {
+      display: none;
+    }
+
+    /* ========================================
+       Buttons
+       ======================================== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+      text-decoration: none;
+      line-height: 1.4;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0a0a0f;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+      box-shadow: 0 0 16px var(--accent-glow);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border-color: var(--border);
+      color: var(--text-secondary);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    .btn-danger {
+      background: transparent;
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .btn-danger:hover {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .btn-icon {
+      padding: 5px 7px;
+      font-size: 0.85rem;
+      min-width: 0;
+    }
+
+    .btn-sm {
+      padding: 5px 10px;
+      font-size: 0.8rem;
+    }
+
+    /* ========================================
+       Admin Bar
+       ======================================== */
+    #admin-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    #admin-bar .admin-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+    }
+
+    #admin-bar .admin-status .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      display: inline-block;
+    }
+
+    #admin-bar .admin-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Adjust main padding when admin bar is visible */
+    body.admin-mode main#app {
+      padding-bottom: 80px;
+    }
+
+    /* ========================================
+       Modal
+       ======================================== */
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-content {
+      position: relative;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      animation: modalIn 0.25s ease;
+    }
+
+    @keyframes modalIn {
+      from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.97);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      margin-bottom: 20px;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    /* ========================================
+       Form Elements
+       ======================================== */
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .form-input,
+    .form-select {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: var(--font);
+      font-size: 0.92rem;
+      transition: border-color var(--transition);
+      outline: none;
+    }
+
+    .form-input:focus,
+    .form-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .form-input::placeholder {
+      color: var(--text-secondary);
+      opacity: 0.6;
+    }
+
+    .form-select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a0a0b0' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+    }
+
+    .form-hint {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      opacity: 0.8;
+    }
+
+    /* ========================================
+       Toast Notification
+       ======================================== */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #fff;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      z-index: 300;
+      animation: toastIn 0.35s ease;
+      max-width: 360px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .toast.toast-success {
+      border-left: 3px solid var(--success);
+      color: var(--success);
+    }
+
+    .toast.toast-error {
+      border-left: 3px solid var(--danger);
+      color: var(--danger);
+    }
+
+    .toast.toast-out {
+      animation: toastOut 0.3s ease forwards;
+    }
+
+    @keyframes toastIn {
+      from {
+        opacity: 0;
+        transform: translateY(16px) translateX(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) translateX(0);
+      }
+    }
+
+    @keyframes toastOut {
+      from {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      to {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+    }
+
+    /* ========================================
+       Empty State
+       ======================================== */
+    #empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 20px;
+      text-align: center;
+    }
+
+    #empty-state .empty-icon {
+      font-size: 3rem;
+      margin-bottom: 16px;
+      opacity: 0.4;
+    }
+
+    #empty-state .empty-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    #empty-state .empty-desc {
+      font-size: 0.92rem;
+      color: var(--text-secondary);
+      max-width: 360px;
+      line-height: 1.6;
+    }
+
+    /* ========================================
+       Loading Spinner
+       ======================================== */
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    .spinner-lg {
+      width: 32px;
+      height: 32px;
+      border-width: 3px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-overlay {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 40px;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    /* ========================================
+       Admin-Only Elements
+       ======================================== */
+    .admin-only {
+      display: none !important;
+    }
+
+    body.admin-mode .admin-only {
+      display: flex !important;
+    }
+
+    /* Inline admin-only that should be inline-flex */
+    .admin-only-inline {
+      display: none !important;
+    }
+
+    body.admin-mode .admin-only-inline {
+      display: inline-flex !important;
+    }
+
+    /* ========================================
+       Utility Classes
+       ======================================== */
+    .hidden {
+      display: none !important;
+    }
+
+    .flex {
+      display: flex;
+    }
+
+    .flex-col {
+      flex-direction: column;
+    }
+
+    .items-center {
+      align-items: center;
+    }
+
+    .justify-between {
+      justify-content: space-between;
+    }
+
+    .gap-1 { gap: 4px; }
+    .gap-2 { gap: 8px; }
+    .gap-3 { gap: 12px; }
+    .gap-4 { gap: 16px; }
+    .gap-6 { gap: 24px; }
+
+    .text-secondary {
+      color: var(--text-secondary);
+    }
+
+    .text-accent {
+      color: var(--accent);
+    }
+
+    .text-sm {
+      font-size: 0.85rem;
+    }
+
+    .mt-2 { margin-top: 8px; }
+    .mt-4 { margin-top: 16px; }
+    .mb-2 { margin-bottom: 8px; }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+
+    /* ========================================
+       Confirm Dialog (for delete actions)
+       ======================================== */
+    .confirm-dialog .modal-content {
+      max-width: 380px;
+    }
+
+    .confirm-dialog .confirm-message {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ========================================
+       Responsive
+       ======================================== */
+    @media (max-width: 768px) {
+      .app-header {
+        padding: 12px 16px;
+      }
+
+      .header-title {
+        font-size: 1.15rem;
+      }
+
+      main#app {
+        padding: 16px 12px;
+      }
+
+      .category-header {
+        padding: 12px 14px;
+      }
+
+      .category-body {
+        padding: 0 14px 12px 14px;
+      }
+
+      .group-header {
+        padding: 8px 10px;
+      }
+
+      .file-list {
+        padding: 4px 10px 8px 10px;
+      }
+
+      .file-item {
+        padding: 6px 8px;
+      }
+
+      .file-item .file-actions {
+        opacity: 1;
+      }
+
+      #admin-bar {
+        padding: 8px 12px;
+        flex-wrap: wrap;
+      }
+
+      .modal-content {
+        padding: 20px;
+        margin: 12px;
+      }
+
+      .toast {
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        max-width: none;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .header-title {
+        font-size: 1rem;
+      }
+
+      main#app {
+        padding: 12px 8px;
+      }
+
+      .category-header .name {
+        font-size: 0.95rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ====== Header ====== -->
+  <header class="app-header">
+    <h1 class="header-title">
+      <span class="icon">📚</span>
+      114 學年度課文總覽
+    </h1>
+    <div class="header-actions">
+      <button class="btn-admin-toggle" id="btn-admin-toggle" title="管理模式">
+        ⚙
+      </button>
+    </div>
+  </header>
+
+  <!-- ====== Main Content ====== -->
+  <main id="app">
+    <!-- Loading state -->
+    <div id="loading" class="loading-overlay">
+      <span class="spinner spinner-lg"></span>
+      <span>載入課文目錄中...</span>
+    </div>
+
+    <!-- Catalog tree (rendered by JS) -->
+    <div id="catalog" class="hidden"></div>
+
+    <!-- Empty state (shown when no categories) -->
+    <div id="empty-state" class="hidden">
+      <div class="empty-icon">📂</div>
+      <div class="empty-title">尚無課文分類</div>
+      <div class="empty-desc">
+        目前還沒有任何課文科目。請聯繫管理員新增課文分類。
+      </div>
+    </div>
+  </main>
+
+  <!-- ====== Admin Bar (hidden by default) ====== -->
+  <div id="admin-bar" class="admin-only">
+    <div class="admin-status">
+      <span class="dot"></span>
+      管理模式
+    </div>
+    <div class="admin-actions">
+      <button class="btn btn-primary btn-sm" id="btn-add-category">
+        ＋ 新增科目
+      </button>
+      <button class="btn btn-secondary btn-sm" id="btn-logout-admin">
+        離開管理
+      </button>
+    </div>
+  </div>
+
+  <!-- ====== Token Modal ====== -->
+  <div id="token-modal" class="modal hidden">
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-content">
+      <h2 class="modal-title">🔑 輸入管理金鑰</h2>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="token-input">GitHub Personal Access Token</label>
+          <input
+            type="password"
+            id="token-input"
+            class="form-input"
+            placeholder="ghp_xxxxxxxxxxxx"
+            autocomplete="off"
+          >
+          <p class="form-hint">需要 repo 權限的 fine-grained token</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btn-cancel-token" data-close-modal>取消</button>
+        <button class="btn btn-primary" id="btn-submit-token">驗證並進入</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== Category Modal (add/rename) ====== -->
+  <div id="category-modal" class="modal hidden">
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-content">
+      <h2 class="modal-title" id="category-modal-title">新增科目</h2>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="category-name-input">科目名稱</label>
+          <input
+            type="text"
+            id="category-name-input"
+            class="form-input"
+            placeholder="例：國語、數學、自然"
+            autocomplete="off"
+          >
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close-modal>取消</button>
+        <button class="btn btn-primary" id="btn-save-category">儲存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== Confirm Modal (delete actions) ====== -->
+  <div id="confirm-modal" class="modal confirm-dialog hidden">
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-content">
+      <h2 class="modal-title" id="confirm-modal-title">確認刪除</h2>
+      <div class="modal-body">
+        <p class="confirm-message" id="confirm-modal-message">確定要刪除嗎？此操作無法復原。</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close-modal id="btn-confirm-cancel">取消</button>
+        <button class="btn btn-danger" id="btn-confirm-ok">確認刪除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== Toast Notification ====== -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- ====== JavaScript ====== -->
+  <script>
+    // =========================================
+    // 114 學年度課文總覽 — Application Logic
+    // =========================================
+    // Task 3: catalog loading + rendering
+    //   - Fetch catalog.json
+    //   - Render category/group/file tree
+    //   - Collapse/expand interaction
+    //   - File link opening + URL copy
+    //
+    // Task 4: admin mode + GitHub API
+    //   - Admin toggle → token modal
+    //   - Token validation via GitHub API
+    //   - Store token in sessionStorage
+    //   - Admin mode UI toggle
+    //
+    // Task 5: category CRUD
+    //   - Add new category
+    //   - Rename category
+    //   - Delete category (with confirm)
+    //   - Persist to catalog.json via GitHub API
+    //
+    // Task 6: file upload/delete
+    //   - Drag-and-drop upload area
+    //   - File upload via GitHub Contents API
+    //   - File delete with confirmation
+    //   - Progress indication
+    //
+    // Task 7: sorting
+    //   - Category reordering (up/down)
+    //   - Group reordering (up/down)
+    //   - File reordering (up/down)
+    //   - Persist order to catalog.json
+  </script>
+</body>
+</html>
