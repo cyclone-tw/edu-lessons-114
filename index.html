@@ -1635,21 +1635,79 @@
       });
     }
 
-    // --- Placeholder functions for Task 7 ---
-    function moveCategoryUp(catIndex) {
-      showToast('排序功能即將開放', 'success');
+    // --- Sort functions (Task 7) ---
+
+    /**
+     * normalizeOrder(arr)
+     * After sorting, re-assign order values 1, 2, 3, … so they stay clean.
+     */
+    function normalizeOrder(arr) {
+      arr.sort((a, b) => a.order - b.order);
+      arr.forEach((item, i) => item.order = i + 1);
     }
 
-    function moveCategoryDown(catIndex) {
-      showToast('排序功能即將開放', 'success');
+    async function moveCategoryUp(catIndex) {
+      const cats = catalogData.categories;
+      if (catIndex <= 0) return;
+      // Swap order values with previous item
+      const temp = cats[catIndex].order;
+      cats[catIndex].order = cats[catIndex - 1].order;
+      cats[catIndex - 1].order = temp;
+      normalizeOrder(cats);
+      try {
+        await saveCatalog();
+        renderCatalog(catalogData);
+      } catch (err) {
+        showToast('排序失敗：' + err.message, 'error');
+      }
     }
 
-    function moveGroupUp(catIndex, groupIndex) {
-      showToast('排序功能即將開放', 'success');
+    async function moveCategoryDown(catIndex) {
+      const cats = catalogData.categories;
+      if (catIndex >= cats.length - 1) return;
+      // Swap order values with next item
+      const temp = cats[catIndex].order;
+      cats[catIndex].order = cats[catIndex + 1].order;
+      cats[catIndex + 1].order = temp;
+      normalizeOrder(cats);
+      try {
+        await saveCatalog();
+        renderCatalog(catalogData);
+      } catch (err) {
+        showToast('排序失敗：' + err.message, 'error');
+      }
     }
 
-    function moveGroupDown(catIndex, groupIndex) {
-      showToast('排序功能即將開放', 'success');
+    async function moveGroupUp(catIndex, groupIndex) {
+      const groups = catalogData.categories[catIndex].groups;
+      if (groupIndex <= 0) return;
+      // Swap order values with previous item
+      const temp = groups[groupIndex].order;
+      groups[groupIndex].order = groups[groupIndex - 1].order;
+      groups[groupIndex - 1].order = temp;
+      normalizeOrder(groups);
+      try {
+        await saveCatalog();
+        renderCatalog(catalogData);
+      } catch (err) {
+        showToast('排序失敗：' + err.message, 'error');
+      }
+    }
+
+    async function moveGroupDown(catIndex, groupIndex) {
+      const groups = catalogData.categories[catIndex].groups;
+      if (groupIndex >= groups.length - 1) return;
+      // Swap order values with next item
+      const temp = groups[groupIndex].order;
+      groups[groupIndex].order = groups[groupIndex + 1].order;
+      groups[groupIndex + 1].order = temp;
+      normalizeOrder(groups);
+      try {
+        await saveCatalog();
+        renderCatalog(catalogData);
+      } catch (err) {
+        showToast('排序失敗：' + err.message, 'error');
+      }
     }
 
     // --- Task 6: File upload & delete ---
