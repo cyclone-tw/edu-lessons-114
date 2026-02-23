@@ -1045,12 +1045,230 @@
     // =========================================
     // 114 學年度課文總覽 — Application Logic
     // =========================================
-    // Task 3: catalog loading + rendering
-    //   - Fetch catalog.json
-    //   - Render category/group/file tree
-    //   - Collapse/expand interaction
-    //   - File link opening + URL copy
-    //
+
+    // --- Global state ---
+    let catalogData = null;
+
+    // --- Task 3: Catalog loading + rendering ---
+
+    /**
+     * showToast(message, type)
+     * Show a toast notification. type = 'success' | 'error'
+     */
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = 'toast';
+      toast.classList.add(type === 'error' ? 'toast-error' : 'toast-success');
+      toast.classList.remove('hidden');
+
+      // Auto-hide after 3 seconds
+      clearTimeout(showToast._timer);
+      showToast._timer = setTimeout(() => {
+        toast.classList.add('toast-out');
+        setTimeout(() => {
+          toast.classList.add('hidden');
+          toast.classList.remove('toast-out');
+        }, 300);
+      }, 3000);
+    }
+
+    /**
+     * toggleCollapse(el)
+     * Toggle the .collapsed class on a category-item or group-item
+     */
+    function toggleCollapse(el) {
+      el.classList.toggle('collapsed');
+    }
+
+    /**
+     * copyLink(btn, relativePath)
+     * Copy the full URL for a lesson file to clipboard
+     */
+    async function copyLink(btn, relativePath) {
+      const base = window.location.origin + window.location.pathname.replace('index.html', '');
+      const fullUrl = base + relativePath;
+
+      try {
+        await navigator.clipboard.writeText(fullUrl);
+        showToast('連結已複製', 'success');
+
+        // Visual feedback on button
+        const originalText = btn.textContent;
+        btn.textContent = '✓';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.classList.remove('copied');
+        }, 2000);
+      } catch (err) {
+        showToast('複製失敗，請手動複製', 'error');
+      }
+    }
+
+    /**
+     * renderCatalog(data)
+     * Generate the multi-level collapsible directory tree inside #catalog
+     */
+    function renderCatalog(data) {
+      const catalogEl = document.getElementById('catalog');
+      catalogEl.innerHTML = '';
+
+      if (!data.categories || data.categories.length === 0) {
+        catalogEl.classList.add('hidden');
+        document.getElementById('empty-state').classList.remove('hidden');
+        return;
+      }
+
+      // Sort categories by order
+      const sortedCategories = [...data.categories].sort((a, b) => a.order - b.order);
+
+      sortedCategories.forEach(category => {
+        const categoryEl = document.createElement('div');
+        categoryEl.className = 'category-item collapsed';
+
+        // Count total files in all groups of this category
+        const totalFiles = (category.groups || []).reduce((sum, group) => {
+          return sum + (group.files ? group.files.length : 0);
+        }, 0);
+
+        // Sort groups by order
+        const sortedGroups = [...(category.groups || [])].sort((a, b) => a.order - b.order);
+
+        // Build groups HTML
+        let groupsHtml = '';
+        sortedGroups.forEach(group => {
+          const fileCount = group.files ? group.files.length : 0;
+
+          // Build file list HTML
+          let filesHtml = '';
+          if (group.files && group.files.length > 0) {
+            const fileItems = group.files.map(file => {
+              const displayName = file.replace(/\.html$/, '');
+              const filePath = `lessons/${category.folder}/${group.folder}/${file}`;
+              return `<div class="file-item">
+                <span class="file-icon">📄</span>
+                <a href="${filePath}" target="_blank" class="file-link">${displayName}</a>
+                <div class="file-actions">
+                  <button class="btn-copy" onclick="copyLink(this, '${filePath}')" title="複製連結">📋</button>
+                </div>
+              </div>`;
+            }).join('');
+            filesHtml = `<div class="file-list">${fileItems}</div>`;
+          } else {
+            filesHtml = `<div class="file-list"><div class="file-item text-secondary" style="font-size:0.85rem;">尚無檔案</div></div>`;
+          }
+
+          groupsHtml += `<div class="group-item collapsed">
+            <div class="group-header" onclick="toggleCollapse(this.parentElement)">
+              <span class="arrow">▶</span>
+              <span class="name">${group.displayName}</span>
+              <span class="count-badge">${fileCount}</span>
+            </div>
+            <div class="children">
+              ${filesHtml}
+            </div>
+          </div>`;
+        });
+
+        categoryEl.innerHTML = `
+          <div class="category-header" onclick="toggleCollapse(this.parentElement)">
+            <span class="arrow">▶</span>
+            <span class="name">${category.displayName}</span>
+            <span class="count-badge">${totalFiles}</span>
+          </div>
+          <div class="children">
+            <div class="category-body">
+              ${groupsHtml}
+            </div>
+          </div>
+        `;
+
+        catalogEl.appendChild(categoryEl);
+      });
+
+      catalogEl.classList.remove('hidden');
+      document.getElementById('empty-state').classList.add('hidden');
+    }
+
+    /**
+     * fetchFilesFromGitHub(category, group, repoInfo)
+     * Fallback: fetch file list from GitHub API when files array is missing
+     */
+    async function fetchFilesFromGitHub(category, group, repoInfo) {
+      if (!repoInfo || !repoInfo.owner || !repoInfo.name) return null;
+
+      const path = `lessons/${category}/${group}`;
+      const url = `https://api.github.com/repos/${repoInfo.owner}/${repoInfo.name}/contents/${path}`;
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        const items = await res.json();
+        return items
+          .filter(item => item.type === 'file' && item.name.endsWith('.html'))
+          .map(item => item.name);
+      } catch {
+        return null;
+      }
+    }
+
+    /**
+     * loadCatalog()
+     * Fetch catalog.json, populate file lists if needed, then render
+     */
+    async function loadCatalog() {
+      const loadingEl = document.getElementById('loading');
+      const catalogEl = document.getElementById('catalog');
+      const emptyEl = document.getElementById('empty-state');
+
+      loadingEl.classList.remove('hidden');
+      catalogEl.classList.add('hidden');
+      emptyEl.classList.add('hidden');
+
+      try {
+        const res = await fetch('catalog.json');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        catalogData = data;
+
+        // For groups missing a files array, try fetching from GitHub API
+        if (data.categories && data.categories.length > 0) {
+          const fetchPromises = [];
+
+          data.categories.forEach(category => {
+            (category.groups || []).forEach(group => {
+              if (!group.files) {
+                const promise = fetchFilesFromGitHub(
+                  category.folder, group.folder, data.repo
+                ).then(files => {
+                  if (files) group.files = files;
+                  else group.files = [];
+                });
+                fetchPromises.push(promise);
+              }
+            });
+          });
+
+          // Wait for all GitHub API calls to finish
+          if (fetchPromises.length > 0) {
+            await Promise.allSettled(fetchPromises);
+          }
+        }
+
+        renderCatalog(data);
+      } catch (err) {
+        console.error('Failed to load catalog:', err);
+        showToast('載入目錄失敗：' + err.message, 'error');
+        emptyEl.classList.remove('hidden');
+      } finally {
+        loadingEl.classList.add('hidden');
+      }
+    }
+
+    // --- Initialize on DOMContentLoaded ---
+    document.addEventListener('DOMContentLoaded', loadCatalog);
+
     // Task 4: admin mode + GitHub API
     //   - Admin toggle → token modal
     //   - Token validation via GitHub API

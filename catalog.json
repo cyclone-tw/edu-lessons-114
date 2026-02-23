@@ -4,5 +4,38 @@
     "owner": "",
     "name": "edu-lessons-114"
   },
-  "categories": []
+  "categories": [
+    {
+      "folder": "國語",
+      "displayName": "國語",
+      "order": 1,
+      "groups": [
+        {
+          "folder": "A組",
+          "displayName": "A組",
+          "order": 1,
+          "files": ["穿越時空的味道.html", "春天來了.html"]
+        },
+        {
+          "folder": "B組",
+          "displayName": "B組",
+          "order": 2,
+          "files": ["大乘三月.html"]
+        }
+      ]
+    },
+    {
+      "folder": "數學",
+      "displayName": "數學",
+      "order": 2,
+      "groups": [
+        {
+          "folder": "A組",
+          "displayName": "A組",
+          "order": 1,
+          "files": []
+        }
+      ]
+    }
+  ]
 }
