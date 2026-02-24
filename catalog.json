@@ -30,6 +30,12 @@
           "files": [
             "01-穿越時空.html"
           ]
+        },
+        {
+          "folder": "第二課",
+          "displayName": "第二課",
+          "order": 2,
+          "files": []
         }
       ]
     }
