@@ -22,7 +22,14 @@
       "folder": "下語文",
       "displayName": "5下語文",
       "order": 2,
-      "groups": []
+      "groups": [
+        {
+          "folder": "第一課",
+          "displayName": "第一課",
+          "order": 1,
+          "files": []
+        }
+      ]
     }
   ]
 }
