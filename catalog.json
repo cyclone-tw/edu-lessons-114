@@ -4,5 +4,12 @@
     "owner": "cyclone-tw",
     "name": "edu-lessons-114"
   },
-  "categories": []
+  "categories": [
+    {
+      "folder": "2下語文",
+      "displayName": "2下語文",
+      "order": 1,
+      "groups": []
+    }
+  ]
 }
