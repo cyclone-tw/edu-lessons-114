@@ -9,7 +9,14 @@
       "folder": "2下語文",
       "displayName": "2下語文",
       "order": 1,
-      "groups": []
+      "groups": [
+        {
+          "folder": "第一課",
+          "displayName": "第一課",
+          "order": 1,
+          "files": []
+        }
+      ]
     }
   ]
 }
