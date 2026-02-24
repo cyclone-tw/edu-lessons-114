@@ -1888,6 +1888,26 @@
       });
     }
 
+    // --- XSS prevention utilities ---
+
+    /**
+     * escapeHtml(str)
+     * Escape HTML special characters to prevent XSS in innerHTML
+     */
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    /**
+     * escapeAttr(str)
+     * Escape single quotes and double quotes for use in HTML attributes (e.g. onclick)
+     */
+    function escapeAttr(str) {
+      return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+
     // --- Task 3: Catalog loading + rendering ---
 
     /**
@@ -2009,15 +2029,16 @@
           let filesHtml = '';
           if (group.files && group.files.length > 0) {
             const fileItems = group.files.map((file, fileIndex) => {
-              const displayName = file.replace(/\.html$/, '');
-              const filePath = `lessons/${category.folder}/${group.folder}/${file}`;
+              const displayName = escapeHtml(file.replace(/\.html$/, ''));
+              const filePath = `lessons/${encodeURIComponent(category.folder)}/${encodeURIComponent(group.folder)}/${encodeURIComponent(file)}`;
+              const filePathAttr = escapeAttr(filePath);
               const fileAdminAction = isAdminMode ? `
                 <button class="btn-icon btn-sm admin-only" onclick="deleteFileItem(${catIndex}, ${groupIndex}, ${fileIndex})" title="刪除檔案" style="color:var(--danger)">🗑️</button>` : '';
               return `<div class="file-item">
                 <span class="file-icon">📄</span>
-                <a href="${filePath}" target="_blank" class="file-link">${displayName}</a>
+                <a href="${escapeHtml(filePath)}" target="_blank" rel="noopener noreferrer" class="file-link">${displayName}</a>
                 <div class="file-actions">
-                  <button class="btn-copy" onclick="copyLink(this, '${filePath}')" title="複製連結">📋</button>
+                  <button class="btn-copy" onclick="copyLink(this, '${filePathAttr}')" title="複製連結">📋</button>
                   ${fileAdminAction}
                 </div>
               </div>`;
@@ -2037,7 +2058,7 @@
           groupsHtml += `<div class="group-item collapsed">
             <div class="group-header" onclick="toggleCollapse(this.parentElement)">
               <span class="arrow">▶</span>
-              <span class="name">${group.displayName}</span>
+              <span class="name">${escapeHtml(group.displayName)}</span>
               <span class="count-badge">${fileCount}</span>
               ${groupAdminActions}
             </div>
@@ -2051,7 +2072,7 @@
         categoryEl.innerHTML = `
           <div class="category-header" onclick="toggleCollapse(this.parentElement)">
             <span class="arrow">▶</span>
-            <span class="name">${category.displayName}</span>
+            <span class="name">${escapeHtml(category.displayName)}</span>
             <span class="count-badge">${totalFiles}</span>
             ${catAdminActions}
           </div>
@@ -2182,14 +2203,6 @@
       document.querySelectorAll('[data-close-modal]').forEach(el => {
         el.addEventListener('click', (e) => {
           const modal = e.target.closest('.modal');
-          if (modal) modal.classList.add('hidden');
-        });
-      });
-
-      // Close modals on backdrop click
-      document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
-        backdrop.addEventListener('click', () => {
-          const modal = backdrop.closest('.modal');
           if (modal) modal.classList.add('hidden');
         });
       });
