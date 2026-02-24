@@ -61,12 +61,20 @@ if (fs.existsSync(LESSONS_DIR)) {
         .filter(f => f.endsWith('.html') && !f.startsWith('.'))
         .sort();
 
-      groups.push({
+      const groupObj = {
         folder: groupDir.name,
         displayName: existingGroup ? existingGroup.displayName : groupDir.name,
         order: existingGroup ? existingGroup.order : groupOrder++,
         files
-      });
+      };
+      // Preserve links and description from existing catalog
+      if (existingGroup && existingGroup.links && existingGroup.links.length > 0) {
+        groupObj.links = existingGroup.links;
+      }
+      if (existingGroup && existingGroup.description) {
+        groupObj.description = existingGroup.description;
+      }
+      groups.push(groupObj);
     }
 
     // Sort groups by order
@@ -102,5 +110,7 @@ console.log(`\n✅ catalog.json 已更新`);
 console.log(`   科目數：${categories.length}`);
 categories.forEach(c => {
   const totalFiles = c.groups.reduce((sum, g) => sum + g.files.length, 0);
-  console.log(`   - ${c.displayName}：${c.groups.length} 個組別，${totalFiles} 個檔案`);
+  const totalLinks = c.groups.reduce((sum, g) => sum + (g.links ? g.links.length : 0), 0);
+  const linkInfo = totalLinks > 0 ? `，${totalLinks} 個連結` : '';
+  console.log(`   - ${c.displayName}：${c.groups.length} 個組別，${totalFiles} 個檔案${linkInfo}`);
 });

@@ -407,6 +407,177 @@
     }
 
     /* ========================================
+       Link Items
+       ======================================== */
+    .file-item.link-item .file-icon {
+      font-size: 1rem;
+    }
+
+    .file-item.link-item .link-description {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      margin-left: 4px;
+      opacity: 0.8;
+    }
+
+    .file-item.link-item .file-link {
+      color: var(--accent);
+    }
+
+    /* ========================================
+       Description Block
+       ======================================== */
+    .group-description {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      margin: 8px 10px 4px 10px;
+      font-size: 0.88rem;
+      line-height: 1.7;
+      color: var(--text-secondary);
+    }
+
+    .group-description a {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
+    .group-description a:hover {
+      color: var(--accent-hover);
+    }
+
+    .group-description ul,
+    .group-description ol {
+      margin: 4px 0 4px 20px;
+    }
+
+    .group-description p {
+      margin: 4px 0;
+    }
+
+    .group-description:empty {
+      display: none;
+    }
+
+    .desc-edit-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 2px 6px;
+      margin-left: 10px;
+      margin-top: 4px;
+      opacity: 0.7;
+      transition: opacity var(--transition);
+    }
+
+    .desc-edit-btn:hover {
+      opacity: 1;
+      color: var(--accent);
+    }
+
+    /* ========================================
+       Rich Text Editor
+       ======================================== */
+    .rte-toolbar {
+      display: flex;
+      gap: 4px;
+      padding: 6px 8px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-bottom: none;
+      border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+      flex-wrap: wrap;
+    }
+
+    .rte-toolbar button {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      min-width: 30px;
+      transition: all var(--transition);
+    }
+
+    .rte-toolbar button:hover {
+      background: var(--accent-glow);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .rte-editor {
+      min-height: 120px;
+      max-height: 300px;
+      overflow-y: auto;
+      padding: 10px 14px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+      color: var(--text-primary);
+      font-family: var(--font);
+      font-size: 0.92rem;
+      line-height: 1.6;
+      outline: none;
+    }
+
+    .rte-editor:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .rte-editor a {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
+    /* ========================================
+       Link Modal (wider for more fields)
+       ======================================== */
+    #link-modal .modal-content {
+      max-width: 520px;
+    }
+
+    .icon-select {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .icon-option {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: all var(--transition);
+      background: var(--bg-surface);
+    }
+
+    .icon-option:hover {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    .icon-option.selected {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    /* ========================================
        Buttons
        ======================================== */
     .btn {
@@ -1033,6 +1204,65 @@
       <div class="modal-footer">
         <button class="btn btn-secondary" data-close-modal id="btn-confirm-cancel">取消</button>
         <button class="btn btn-danger" id="btn-confirm-ok">確認刪除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== Link Modal (add/edit link) ====== -->
+  <div id="link-modal" class="modal hidden">
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-content">
+      <h2 class="modal-title" id="link-modal-title">新增連結</h2>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="link-title-input">顯示名稱</label>
+          <input type="text" id="link-title-input" class="form-input" placeholder="例：課文朗讀影片" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="link-url-input">網址 URL</label>
+          <input type="url" id="link-url-input" class="form-input" placeholder="https://..." autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="link-desc-input">簡短描述</label>
+          <input type="text" id="link-desc-input" class="form-input" placeholder="選填" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label">圖示類型</label>
+          <div class="icon-select" id="link-icon-select">
+            <div class="icon-option selected" data-icon="link" title="一般連結">🔗</div>
+            <div class="icon-option" data-icon="video" title="影片">🎬</div>
+            <div class="icon-option" data-icon="doc" title="文件">📑</div>
+            <div class="icon-option" data-icon="quiz" title="測驗">📝</div>
+            <div class="icon-option" data-icon="web" title="網頁">🌐</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close-modal>取消</button>
+        <button class="btn btn-primary" id="btn-save-link">儲存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== Description Editor Modal ====== -->
+  <div id="desc-modal" class="modal hidden">
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-content" style="max-width:560px;">
+      <h2 class="modal-title">編輯說明文字</h2>
+      <div class="modal-body">
+        <div class="rte-toolbar">
+          <button type="button" onclick="rteCommand('bold')" title="粗體"><b>B</b></button>
+          <button type="button" onclick="rteCommand('italic')" title="斜體"><i>I</i></button>
+          <button type="button" onclick="rteCommand('insertUnorderedList')" title="項目清單">• 清單</button>
+          <button type="button" onclick="rteCommand('insertOrderedList')" title="編號清單">1. 清單</button>
+          <button type="button" onclick="rteInsertLink()" title="插入超連結">🔗 連結</button>
+        </div>
+        <div class="rte-editor" id="rte-editor" contenteditable="true"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close-modal>取消</button>
+        <button class="btn btn-danger btn-sm" id="btn-clear-desc">清除</button>
+        <button class="btn btn-primary" id="btn-save-desc">儲存</button>
       </div>
     </div>
   </div>
@@ -1847,6 +2077,204 @@
       );
     }
 
+    // --- Link CRUD ---
+    let linkModalCallback = null;
+
+    /**
+     * showLinkModal(title, linkData, callback)
+     * Show modal for add/edit link item
+     * linkData: { title, url, description, icon } or null for new
+     */
+    function showLinkModal(title, linkData, callback) {
+      document.getElementById('link-modal-title').textContent = title;
+      document.getElementById('link-title-input').value = linkData ? linkData.title : '';
+      document.getElementById('link-url-input').value = linkData ? linkData.url : '';
+      document.getElementById('link-desc-input').value = linkData ? linkData.description : '';
+
+      // Reset icon selection
+      const iconSelect = document.getElementById('link-icon-select');
+      iconSelect.querySelectorAll('.icon-option').forEach(opt => {
+        opt.classList.toggle('selected', opt.dataset.icon === (linkData ? linkData.icon : 'link'));
+      });
+
+      linkModalCallback = callback;
+      showModal('link-modal');
+      setTimeout(() => document.getElementById('link-title-input').focus(), 50);
+    }
+
+    /**
+     * getSelectedIcon()
+     * Get currently selected icon type from the icon select UI
+     */
+    function getSelectedIcon() {
+      const selected = document.querySelector('#link-icon-select .icon-option.selected');
+      return selected ? selected.dataset.icon : 'link';
+    }
+
+    /**
+     * addLink(catIndex, groupIndex)
+     * Show modal to add a new link item to a group
+     */
+    function addLink(catIndex, groupIndex) {
+      showLinkModal('新增連結', null, async (linkData) => {
+        const category = catalogData.categories[catIndex];
+        const group = category.groups[groupIndex];
+
+        if (!group.links) group.links = [];
+
+        // Calculate order: after all existing files and links
+        const maxFileOrder = (group.files || []).length;
+        const maxLinkOrder = group.links.reduce((max, l) => Math.max(max, l.order || 0), 0);
+        const newOrder = Math.max(maxFileOrder, maxLinkOrder) + 1;
+
+        const newLink = {
+          title: linkData.title,
+          url: linkData.url,
+          description: linkData.description || '',
+          icon: linkData.icon || 'link',
+          order: newOrder
+        };
+
+        group.links.push(newLink);
+
+        const saveBtn = document.getElementById('btn-save-link');
+        setButtonLoading(saveBtn, true);
+
+        try {
+          await saveCatalog();
+          hideModal('link-modal');
+          renderCatalog(catalogData);
+          showToast(`已新增連結「${linkData.title}」`, 'success');
+        } catch (err) {
+          group.links.pop();
+          showToast('新增連結失敗：' + err.message, 'error');
+        } finally {
+          setButtonLoading(saveBtn, false);
+        }
+      });
+    }
+
+    /**
+     * editLink(catIndex, groupIndex, linkIndex)
+     * Show modal to edit an existing link item
+     */
+    function editLink(catIndex, groupIndex, linkIndex) {
+      const group = catalogData.categories[catIndex].groups[groupIndex];
+      const link = group.links[linkIndex];
+      if (!link) return;
+
+      showLinkModal('編輯連結', link, async (linkData) => {
+        const saveBtn = document.getElementById('btn-save-link');
+        setButtonLoading(saveBtn, true);
+
+        try {
+          link.title = linkData.title;
+          link.url = linkData.url;
+          link.description = linkData.description || '';
+          link.icon = linkData.icon || 'link';
+
+          await saveCatalog();
+          hideModal('link-modal');
+          renderCatalog(catalogData);
+          showToast(`已更新連結「${linkData.title}」`, 'success');
+        } catch (err) {
+          showToast('更新連結失敗：' + err.message, 'error');
+        } finally {
+          setButtonLoading(saveBtn, false);
+        }
+      });
+    }
+
+    /**
+     * deleteLinkItem(catIndex, groupIndex, linkIndex)
+     * Confirm and delete a link from catalog
+     */
+    function deleteLinkItem(catIndex, groupIndex, linkIndex) {
+      const group = catalogData.categories[catIndex].groups[groupIndex];
+      const link = group.links[linkIndex];
+      if (!link) return;
+
+      showConfirmModal(
+        '刪除連結',
+        `確定要刪除連結「${link.title}」嗎？`,
+        async () => {
+          try {
+            hideAllModals();
+            group.links.splice(linkIndex, 1);
+            await saveCatalog();
+            renderCatalog(catalogData);
+            showToast(`已刪除連結「${link.title}」`, 'success');
+          } catch (err) {
+            showToast('刪除連結失敗：' + err.message, 'error');
+          }
+        }
+      );
+    }
+
+    // --- Rich Text Editor & Description CRUD ---
+
+    let descModalCallback = null;
+
+    /**
+     * rteCommand(command, value)
+     * Execute a rich text editing command on the RTE editor
+     */
+    function rteCommand(command, value = null) {
+      document.execCommand(command, false, value);
+      document.getElementById('rte-editor').focus();
+    }
+
+    /**
+     * rteInsertLink()
+     * Prompt for URL and insert a hyperlink at the current selection
+     */
+    function rteInsertLink() {
+      const url = prompt('請輸入網址：', 'https://');
+      if (url && url !== 'https://') {
+        document.execCommand('createLink', false, url);
+        // Add target="_blank" to the newly created link
+        const editor = document.getElementById('rte-editor');
+        const links = editor.querySelectorAll('a:not([target])');
+        links.forEach(a => {
+          a.setAttribute('target', '_blank');
+          a.setAttribute('rel', 'noopener noreferrer');
+        });
+        editor.focus();
+      }
+    }
+
+    /**
+     * editDescription(catIndex, groupIndex)
+     * Open the rich text editor modal to edit group description
+     */
+    function editDescription(catIndex, groupIndex) {
+      const group = catalogData.categories[catIndex].groups[groupIndex];
+      const editor = document.getElementById('rte-editor');
+
+      // Load existing description into editor
+      editor.innerHTML = group.description || '';
+
+      descModalCallback = async (html) => {
+        const saveBtn = document.getElementById('btn-save-desc');
+        setButtonLoading(saveBtn, true);
+
+        try {
+          group.description = html;
+          await saveCatalog();
+          hideModal('desc-modal');
+          renderCatalog(catalogData);
+          showToast('說明文字已更新', 'success');
+        } catch (err) {
+          showToast('更新說明失敗：' + err.message, 'error');
+        } finally {
+          setButtonLoading(saveBtn, false);
+        }
+      };
+
+      showModal('desc-modal');
+      setTimeout(() => editor.focus(), 50);
+    }
+
     /**
      * wireUploadAreaDragDrop()
      * Attach drag-and-drop event handlers to all .upload-area elements
@@ -1907,6 +2335,64 @@
     function escapeAttr(str) {
       return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
     }
+
+    /**
+     * sanitizeHtml(html)
+     * Whitelist-based HTML sanitizer for description blocks.
+     * Only allows: b, i, strong, em, a (with href), ul, ol, li, p, br
+     */
+    function sanitizeHtml(html) {
+      const temp = document.createElement('div');
+      temp.innerHTML = html;
+
+      function cleanNode(node) {
+        const allowed = ['B', 'I', 'STRONG', 'EM', 'A', 'UL', 'OL', 'LI', 'P', 'BR'];
+        const children = Array.from(node.childNodes);
+
+        for (const child of children) {
+          if (child.nodeType === Node.TEXT_NODE) continue;
+          if (child.nodeType === Node.ELEMENT_NODE) {
+            if (!allowed.includes(child.tagName)) {
+              const text = document.createTextNode(child.textContent);
+              node.replaceChild(text, child);
+            } else {
+              const attrs = Array.from(child.attributes);
+              for (const attr of attrs) {
+                if (child.tagName === 'A' && attr.name === 'href') {
+                  if (!attr.value.match(/^https?:\/\//)) {
+                    child.removeAttribute('href');
+                  }
+                } else {
+                  child.removeAttribute(attr.name);
+                }
+              }
+              if (child.tagName === 'A') {
+                child.setAttribute('target', '_blank');
+                child.setAttribute('rel', 'noopener noreferrer');
+              }
+              cleanNode(child);
+            }
+          } else {
+            node.removeChild(child);
+          }
+        }
+      }
+
+      cleanNode(temp);
+      return temp.innerHTML;
+    }
+
+    /**
+     * LINK_ICONS
+     * Map of icon type to emoji for link items
+     */
+    const LINK_ICONS = {
+      link: '🔗',
+      video: '🎬',
+      doc: '📑',
+      quiz: '📝',
+      web: '🌐'
+    };
 
     // --- Task 3: Catalog loading + rendering ---
 
@@ -1988,9 +2474,9 @@
         const categoryEl = document.createElement('div');
         categoryEl.className = 'category-item collapsed';
 
-        // Count total files in all groups of this category
+        // Count total files + links in all groups of this category
         const totalFiles = (category.groups || []).reduce((sum, group) => {
-          return sum + (group.files ? group.files.length : 0);
+          return sum + (group.files ? group.files.length : 0) + (group.links ? group.links.length : 0);
         }, 0);
 
         // Sort groups by order
@@ -2012,12 +2498,14 @@
         let groupsHtml = '';
         sortedGroups.forEach((group, grpSortedIdx) => {
           const groupIndex = (category.groups || []).indexOf(group);
-          const fileCount = group.files ? group.files.length : 0;
+          const fileCount = (group.files ? group.files.length : 0) + (group.links ? group.links.length : 0);
 
           // Build group admin actions HTML
           const groupAdminActions = isAdminMode ? `
             <div class="admin-actions admin-only">
               <button class="btn-icon btn-sm" onclick="event.stopPropagation(); renameGroup(${catIndex}, ${groupIndex})" title="重新命名">✏️</button>
+              <button class="btn-icon btn-sm" onclick="event.stopPropagation(); addLink(${catIndex}, ${groupIndex})" title="新增連結">🔗</button>
+              <button class="btn-icon btn-sm" onclick="event.stopPropagation(); editDescription(${catIndex}, ${groupIndex})" title="編輯說明">📝</button>
               <div class="sort-buttons">
                 <button class="btn-sort" onclick="event.stopPropagation(); moveGroupUp(${catIndex}, ${groupIndex})" title="上移">▲</button>
                 <button class="btn-sort" onclick="event.stopPropagation(); moveGroupDown(${catIndex}, ${groupIndex})" title="下移">▼</button>
@@ -2025,27 +2513,68 @@
               <button class="btn-icon btn-sm" onclick="event.stopPropagation(); deleteGroup(${catIndex}, ${groupIndex})" title="刪除" style="color:var(--danger)">🗑️</button>
             </div>` : '';
 
-          // Build file list HTML
-          let filesHtml = '';
-          if (group.files && group.files.length > 0) {
-            const fileItems = group.files.map((file, fileIndex) => {
-              const displayName = escapeHtml(file.replace(/\.html$/, ''));
-              const filePath = `lessons/${encodeURIComponent(category.folder)}/${encodeURIComponent(group.folder)}/${encodeURIComponent(file)}`;
-              const filePathAttr = escapeAttr(filePath);
-              const fileAdminAction = isAdminMode ? `
-                <button class="btn-icon btn-sm admin-only" onclick="deleteFileItem(${catIndex}, ${groupIndex}, ${fileIndex})" title="刪除檔案" style="color:var(--danger)">🗑️</button>` : '';
-              return `<div class="file-item">
-                <span class="file-icon">📄</span>
-                <a href="${escapeHtml(filePath)}" target="_blank" rel="noopener noreferrer" class="file-link">${displayName}</a>
-                <div class="file-actions">
-                  <button class="btn-copy" onclick="copyLink(this, '${filePathAttr}')" title="複製連結">📋</button>
-                  ${fileAdminAction}
-                </div>
-              </div>`;
+          // Build description block
+          const descHtml = group.description
+            ? `<div class="group-description">${sanitizeHtml(group.description)}</div>`
+            : (isAdminMode ? `<button class="desc-edit-btn admin-only" onclick="editDescription(${catIndex}, ${groupIndex})">📝 新增說明文字</button>` : '');
+
+          // Build merged items (files + links), sorted by order
+          const mergedItems = [];
+
+          // Add files with order
+          (group.files || []).forEach((file, fileIndex) => {
+            mergedItems.push({ type: 'file', data: file, index: fileIndex, order: fileIndex + 1 });
+          });
+
+          // Add links with order
+          (group.links || []).forEach((link, linkIndex) => {
+            mergedItems.push({ type: 'link', data: link, index: linkIndex, order: link.order || (group.files || []).length + linkIndex + 1 });
+          });
+
+          // Sort by order
+          mergedItems.sort((a, b) => a.order - b.order);
+
+          let itemsHtml = '';
+          if (mergedItems.length > 0) {
+            const itemElements = mergedItems.map(item => {
+              if (item.type === 'file') {
+                const file = item.data;
+                const fileIndex = item.index;
+                const displayName = escapeHtml(file.replace(/\.html$/, ''));
+                const filePath = `lessons/${encodeURIComponent(category.folder)}/${encodeURIComponent(group.folder)}/${encodeURIComponent(file)}`;
+                const filePathAttr = escapeAttr(filePath);
+                const fileAdminAction = isAdminMode ? `
+                  <button class="btn-icon btn-sm admin-only" onclick="deleteFileItem(${catIndex}, ${groupIndex}, ${fileIndex})" title="刪除檔案" style="color:var(--danger)">🗑️</button>` : '';
+                return `<div class="file-item">
+                  <span class="file-icon">📄</span>
+                  <a href="${escapeHtml(filePath)}" target="_blank" rel="noopener noreferrer" class="file-link">${displayName}</a>
+                  <div class="file-actions">
+                    <button class="btn-copy" onclick="copyLink(this, '${filePathAttr}')" title="複製連結">📋</button>
+                    ${fileAdminAction}
+                  </div>
+                </div>`;
+              } else {
+                // Link item
+                const link = item.data;
+                const linkIndex = item.index;
+                const icon = LINK_ICONS[link.icon] || '🔗';
+                const descSpan = link.description ? `<span class="link-description">— ${escapeHtml(link.description)}</span>` : '';
+                const linkAdminActions = isAdminMode ? `
+                  <button class="btn-icon btn-sm admin-only" onclick="editLink(${catIndex}, ${groupIndex}, ${linkIndex})" title="編輯連結">✏️</button>
+                  <button class="btn-icon btn-sm admin-only" onclick="deleteLinkItem(${catIndex}, ${groupIndex}, ${linkIndex})" title="刪除連結" style="color:var(--danger)">🗑️</button>` : '';
+                return `<div class="file-item link-item">
+                  <span class="file-icon">${icon}</span>
+                  <a href="${escapeAttr(link.url)}" target="_blank" rel="noopener noreferrer" class="file-link">${escapeHtml(link.title)}</a>
+                  ${descSpan}
+                  <div class="file-actions">
+                    ${linkAdminActions}
+                  </div>
+                </div>`;
+              }
             }).join('');
-            filesHtml = `<div class="file-list">${fileItems}</div>`;
+            itemsHtml = `<div class="file-list">${itemElements}</div>`;
           } else {
-            filesHtml = `<div class="file-list"><div class="file-item text-secondary" style="font-size:0.85rem;">尚無檔案</div></div>`;
+            itemsHtml = `<div class="file-list"><div class="file-item text-secondary" style="font-size:0.85rem;">尚無檔案</div></div>`;
           }
 
           // Upload area for admin mode (with drag-and-drop data attributes)
@@ -2063,7 +2592,8 @@
               ${groupAdminActions}
             </div>
             <div class="children">
-              ${filesHtml}
+              ${descHtml}
+              ${itemsHtml}
               ${uploadArea}
             </div>
           </div>`;
@@ -2232,6 +2762,61 @@
       // Confirm modal: confirm button calls the stored callback
       document.getElementById('btn-confirm-ok').addEventListener('click', () => {
         if (confirmCallback) confirmCallback();
+      });
+
+      // --- Link modal event listeners ---
+
+      // Link modal: icon selection
+      document.getElementById('link-icon-select').addEventListener('click', (e) => {
+        const option = e.target.closest('.icon-option');
+        if (!option) return;
+        document.querySelectorAll('#link-icon-select .icon-option').forEach(o => o.classList.remove('selected'));
+        option.classList.add('selected');
+      });
+
+      // Link modal: save button
+      document.getElementById('btn-save-link').addEventListener('click', () => {
+        const title = document.getElementById('link-title-input').value.trim();
+        const url = document.getElementById('link-url-input').value.trim();
+        const description = document.getElementById('link-desc-input').value.trim();
+        const icon = getSelectedIcon();
+
+        if (!title) {
+          showToast('請輸入顯示名稱', 'error');
+          return;
+        }
+        if (!url) {
+          showToast('請輸入網址', 'error');
+          return;
+        }
+        if (!url.match(/^https?:\/\//)) {
+          showToast('網址必須以 http:// 或 https:// 開頭', 'error');
+          return;
+        }
+
+        if (linkModalCallback) linkModalCallback({ title, url, description, icon });
+      });
+
+      // Link modal: Enter key to save (on URL field)
+      document.getElementById('link-url-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          document.getElementById('btn-save-link').click();
+        }
+      });
+
+      // --- Description modal event listeners ---
+
+      // Description modal: save button
+      document.getElementById('btn-save-desc').addEventListener('click', () => {
+        const editor = document.getElementById('rte-editor');
+        const html = sanitizeHtml(editor.innerHTML);
+        if (descModalCallback) descModalCallback(html);
+      });
+
+      // Description modal: clear button
+      document.getElementById('btn-clear-desc').addEventListener('click', () => {
+        if (descModalCallback) descModalCallback('');
       });
 
       // Check URL params for auto-admin mode
