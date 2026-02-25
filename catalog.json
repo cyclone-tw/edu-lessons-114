@@ -16,6 +16,15 @@
           "order": 1,
           "files": [
             "114_2下_01.彩色心情.html"
+          ],
+          "links": [
+            {
+              "title": "第一課 彩色心情 筆順練習",
+              "url": "https://gsyan888.github.io/html5_fun/html5_stroke_parts/html5_stroke_parts.html?words=%E6%83%85%E5%80%99%E7%BF%A0%E6%BA%9C%E6%BB%91%E5%82%B3%E6%B7%B1%E6%B3%B3%E6%B7%9A%E7%81%AB%E5%A5%94%E6%80%92%E6%8B%8B%E6%BD%94%E8%88%9E%E5%90%84%E5%90%8C%E5%8F%97%E8%97%8F",
+              "description": "",
+              "icon": "link",
+              "order": 2
+            }
           ]
         }
       ]
